@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brain Pocket</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Login view: full screen, shown before sign-in -->
+  <main id="login" class="login" hidden>
+    <div class="login-box">
+      <div class="brand"><span class="dot"></span> Brain Pocket</div>
+      <p class="login-sub" id="auth-sub">Sign in to your account.</p>
+      <form id="auth-form">
+        <label class="field">
+          <span>Email</span>
+          <input id="auth-email" type="email" placeholder="you@example.com" autocomplete="email" required />
+        </label>
+        <label class="field">
+          <span>Password</span>
+          <span class="pw-wrap">
+            <input id="auth-password" type="password" autocomplete="current-password" required />
+            <button type="button" id="pw-toggle" class="pw-toggle" aria-label="Show password">Show</button>
+          </span>
+        </label>
+        <button type="submit" id="auth-submit">Sign in</button>
+      </form>
+      <p class="switch">
+        <span id="auth-switch-text">Don't have an account?</span>
+        <button type="button" id="auth-switch" class="link">Create one</button>
+      </p>
+      <p id="auth-status" class="status" role="status"></p>
+    </div>
+  </main>
+
+  <!-- App view: shown after sign-in -->
+  <div id="app" hidden>
+    <header class="topbar">
+      <div class="brand"><span class="dot"></span> Brain Pocket</div>
+      <input id="search" type="search" placeholder="Search…" aria-label="Search" />
+      <details id="menu" class="menu">
+        <summary aria-label="Options">⋯</summary>
+        <div class="menu-panel">
+          <button id="sign-out" class="menu-item">Sign out</button>
+          <button id="clear-all" class="menu-item danger-text">Clear all data</button>
+        </div>
+      </details>
+    </header>
+
+    <main>
+      <section class="card" aria-labelledby="add-title">
+        <h2 id="add-title">Add</h2>
+        <form id="add-form">
+          <textarea id="add-text" rows="2" placeholder="Write a todo or a note…" required></textarea>
+          <div class="row">
+            <select id="add-type" aria-label="Type">
+              <option value="todo">Todo</option>
+              <option value="note">Note</option>
+            </select>
+            <select id="add-tag" aria-label="Tag"></select>
+            <button type="submit">Add</button>
+          </div>
+        </form>
+
+        <details class="tags">
+          <summary>Manage tags</summary>
+          <form id="tag-form" class="row">
+            <input id="new-tag" type="text" placeholder="New tag" />
+            <button type="submit">Add tag</button>
+          </form>
+          <ul id="tag-list"></ul>
+        </details>
+      </section>
+
+      <section class="card" aria-labelledby="todos-title">
+        <div class="card-head">
+          <h2 id="todos-title">Todos</h2>
+          <div id="todo-filter" class="filter" role="group" aria-label="Filter todos">
+            <button type="button" data-filter="active" class="active">Active</button>
+            <button type="button" data-filter="completed">Completed</button>
+            <button type="button" data-filter="all">All</button>
+          </div>
+        </div>
+        <ul id="todo-list" class="items"></ul>
+        <p id="todo-empty" class="empty">No todos yet.</p>
+      </section>
+
+      <section class="card" aria-labelledby="notes-title">
+        <h2 id="notes-title">Notes</h2>
+        <ul id="note-list" class="items"></ul>
+        <p id="note-empty" class="empty">No notes yet.</p>
+      </section>
+
+      <p id="status" class="status" role="status"></p>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
