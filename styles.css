@@ -228,6 +228,15 @@ button:hover { filter: brightness(1.07); }
 button.secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
 
 /* ---------- Items ---------- */
+.item-groups { display: flex; flex-direction: column; gap: 18px; }
+.item-group .category-title {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
 .items { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .item {
   display: flex;
@@ -244,16 +253,6 @@ button.secondary { background: var(--surface); color: var(--text); border-color:
 .item .body { flex: 1; min-width: 0; }
 .item .text { word-break: break-word; white-space: pre-wrap; }
 .item.done .text { text-decoration: line-through; color: var(--muted); }
-
-.tag {
-  display: inline-block;
-  font-size: 0.72rem;
-  color: var(--accent);
-  background: var(--accent-soft);
-  border-radius: 6px;
-  padding: 2px 8px;
-  margin-top: 6px;
-}
 
 .item .actions { display: flex; gap: 2px; }
 .item .actions button {

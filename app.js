@@ -167,12 +167,6 @@ function makeItem(item) {
   text.className = "text";
   text.textContent = item.text;
   body.appendChild(text);
-  if (item.tag) {
-    const tag = document.createElement("span");
-    tag.className = "tag";
-    tag.textContent = item.tag;
-    body.appendChild(tag);
-  }
 
   if (item.type === "todo") {
     const check = document.createElement("input");
@@ -203,6 +197,56 @@ function makeItem(item) {
   return li;
 }
 
+function itemTime(item) {
+  return item.created_at ? new Date(item.created_at).getTime() : 0;
+}
+
+function sortItems(list) {
+  const byTime = (a, b) => itemTime(a) - itemTime(b);
+  return [...list].sort((a, b) => {
+    const tagA = (a.tag || "").trim();
+    const tagB = (b.tag || "").trim();
+    if (!tagA && tagB) return 1;
+    if (tagA && !tagB) return -1;
+    const tagCmp = tagA.localeCompare(tagB);
+    return tagCmp !== 0 ? tagCmp : byTime(a, b);
+  });
+}
+
+function groupByTag(list) {
+  const groups = [];
+  for (const item of list) {
+    const tag = (item.tag || "").trim() || null;
+    const last = groups[groups.length - 1];
+    if (last && last.tag === tag) {
+      last.items.push(item);
+    } else {
+      groups.push({ tag, label: tag || "Uncategorized", items: [item] });
+    }
+  }
+  return groups;
+}
+
+function renderItemList(container, list) {
+  container.innerHTML = "";
+  if (list.length === 0) return;
+
+  container.className = "item-groups";
+  for (const group of groupByTag(list)) {
+    const section = document.createElement("div");
+    section.className = "item-group";
+    const heading = document.createElement("h3");
+    heading.className = "category-title";
+    heading.textContent = group.label;
+    section.appendChild(heading);
+    const ul = document.createElement("ul");
+    ul.className = "items";
+    group.items.forEach((i) => ul.appendChild(makeItem(i)));
+    section.appendChild(ul);
+    container.appendChild(section);
+  }
+}
+
 function startEdit(item, body, text) {
   const area = document.createElement("textarea");
   area.value = item.text;
@@ -226,15 +270,11 @@ function render() {
   const byFilter = (i) =>
     todoFilter === "all" || (todoFilter === "completed" ? i.done : !i.done);
 
-  const todos = items.filter((i) => i.type === "todo" && match(i) && byFilter(i));
-  const notes = items.filter((i) => i.type === "note" && match(i));
+  const todos = sortItems(items.filter((i) => i.type === "todo" && match(i) && byFilter(i)));
+  const notes = sortItems(items.filter((i) => i.type === "note" && match(i)));
 
-  const todoList = $("todo-list");
-  const noteList = $("note-list");
-  todoList.innerHTML = "";
-  noteList.innerHTML = "";
-  todos.forEach((i) => todoList.appendChild(makeItem(i)));
-  notes.forEach((i) => noteList.appendChild(makeItem(i)));
+  renderItemList($("todo-list"), todos);
+  renderItemList($("note-list"), notes);
 
   $("todo-empty").textContent =
     todoFilter === "completed" ? "No completed todos." :
