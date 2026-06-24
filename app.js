@@ -1,4 +1,4 @@
-const DEFAULT_TAGS = ["Personal", "Study", "Money", "Calls", "Errands", "Other"];
+const DEFAULT_TAGS = ["Personal"];
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -317,13 +317,32 @@ $("tag-form").onsubmit = (e) => {
   }
 };
 
-$("tag-list").onclick = (e) => {
+$("tag-list").onclick = async (e) => {
   const name = e.target.dataset.tag;
   if (!name) return;
-  if (items.some((i) => i.tag === name)) {
-    return status(`"${name}" is in use and can't be deleted.`);
+
+  const inUse = items.filter((i) => i.tag === name);
+  if (inUse.length) {
+    const others = tags.filter((t) => t !== name);
+    if (!others.length) {
+      return status(`"${name}" is in use and is the only tag left.`);
+    }
+    const fallback = others.includes("Personal") ? "Personal" : others[0];
+    const n = inUse.length;
+    const msg = n === 1
+      ? `"${name}" is used by 1 item. Reassign it to "${fallback}" and remove this tag?`
+      : `"${name}" is used by ${n} items. Reassign them to "${fallback}" and remove this tag?`;
+    if (!confirm(msg)) return;
+
+    for (const item of inUse) {
+      const { error } = await db.from("items").update({ tag: fallback }).eq("id", item.id);
+      if (error) return status("Could not update: " + error.message);
+      item.tag = fallback;
+    }
   }
+
   tags = tags.filter((t) => t !== name);
+  status("");
   render();
 };
 
