@@ -5,6 +5,7 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let items = [];
 let tags = [...DEFAULT_TAGS];
 let todoFilter = "active"; // "active" | "completed" | "all"
+let loadGen = 0;
 
 const $ = (id) => document.getElementById(id);
 const status = (msg) => { $("status").textContent = msg; };
@@ -107,7 +108,9 @@ db.auth.onAuthStateChange((event) => {
 });
 
 async function loadItems() {
+  const gen = ++loadGen;
   const { data, error } = await db.from("items").select("*").order("created_at");
+  if (gen !== loadGen) return;
   if (error) return status("Could not load data: " + error.message);
   items = data || [];
   const extra = items.map((i) => i.tag).filter((t) => t && !tags.includes(t));
@@ -115,12 +118,20 @@ async function loadItems() {
   render();
 }
 
+function itemKind(item) {
+  return (item.type || "").trim().toLowerCase();
+}
+
 async function addItem(text, type, tag) {
   const item = { text, type, tag, done: false, created_at: new Date().toISOString() };
-  const { data, error } = await db.from("items").insert(item).select().single();
+  const { error } = await db.from("items").insert(item);
   if (error) return status("Could not save: " + error.message);
-  items.push(data);
-  render();
+  status("");
+  $("search").value = "";
+  await loadItems();
+  if (itemKind({ type }) === "note") {
+    $("notes-title").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 }
 
 async function updateItem(id, changes) {
@@ -168,7 +179,7 @@ function makeItem(item) {
   text.textContent = item.text;
   body.appendChild(text);
 
-  if (item.type === "todo") {
+  if (itemKind(item) === "todo") {
     const check = document.createElement("input");
     check.type = "checkbox";
     check.checked = item.done;
@@ -229,7 +240,10 @@ function groupByTag(list) {
 
 function renderItemList(container, list) {
   container.innerHTML = "";
-  if (list.length === 0) return;
+  if (list.length === 0) {
+    container.className = "";
+    return;
+  }
 
   container.className = "item-groups";
   for (const group of groupByTag(list)) {
@@ -270,8 +284,8 @@ function render() {
   const byFilter = (i) =>
     todoFilter === "all" || (todoFilter === "completed" ? i.done : !i.done);
 
-  const todos = sortItems(items.filter((i) => i.type === "todo" && match(i) && byFilter(i)));
-  const notes = sortItems(items.filter((i) => i.type === "note" && match(i)));
+  const todos = sortItems(items.filter((i) => itemKind(i) === "todo" && match(i) && byFilter(i)));
+  const notes = sortItems(items.filter((i) => itemKind(i) === "note" && match(i)));
 
   renderItemList($("todo-list"), todos);
   renderItemList($("note-list"), notes);
@@ -283,12 +297,14 @@ function render() {
   $("note-empty").hidden = notes.length > 0;
 }
 
-$("add-form").onsubmit = (e) => {
+$("add-form").onsubmit = async (e) => {
   e.preventDefault();
   const text = $("add-text").value.trim();
   if (!text) return;
-  addItem(text, $("add-type").value, $("add-tag").value);
+  const type = $("add-type").value;
+  const tag = $("add-tag").value;
   $("add-text").value = "";
+  await addItem(text, type, tag);
 };
 
 $("tag-form").onsubmit = (e) => {
